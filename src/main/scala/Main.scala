@@ -1,4 +1,6 @@
-import solver.Gaus
+import constraint.{Axis, FixedAxis}
+import form.Point
+import solver.{AB, Gaus, MatrixBuilder}
 
 import scala.language.postfixOps
 
@@ -8,21 +10,42 @@ import scala.language.postfixOps
 
 object Main {
   def main(args: Array[String]): Unit = {
-    val (matrix, right) = AB.unzip
-    println(AB.mkString("\n"))
+    println(ABTemp)
+
+    println()
+    println(ABFromBuilder)
 
     println("\nResult:")
-    println(new Gaus(matrix, right).result)
+    println(new Gaus(ABFromBuilder).result)
   }
 
-  def AB = {
-    val matrixSize = 2
+  def ABFromBuilder = {
+    val p = Point(10, 20)
+    new MatrixBuilder(
+      FixedAxis(Axis.Y, 13, p) :: FixedAxis(Axis.X, 20, p) :: Nil,
+      p :: Nil
+    ).build()
+  }
 
-    IndexedSeq[Double](
-      0, 4,   2,
-      2, 2,   5
+//  (Vector(2.0, 0.0, 0.0, -1.0),20.0)
+//  (Vector(0.0, 2.0, -1.0, 0.0),40.0)
+//  (Vector(0.0, 1.0, 0.0, 0.0),13.0)
+//  (Vector(1.0, 0.0, 0.0, 0.0),20.0)
+
+  def ABTemp = {
+    val matrixSize = 4
+
+    val (matrix, right) = IndexedSeq[Double](
+      2, 0, 0, -1, 2 * 10,
+      0, 2, -1, 0, 2 * 20,
+      0, 1, 0, 0, 13,
+      1, 0, 0, 0, 20
     ).sliding(matrixSize + 1, matrixSize + 1).map { vector =>
-      vector.splitAt(matrixSize) match { case (a, b) => (a, b.head)}
-    } toIndexedSeq
+      vector.splitAt(matrixSize) match {
+        case (a, b) => (a, b.head)
+      }
+    }.toIndexedSeq.unzip
+
+    AB(matrix, right)
   }
 }

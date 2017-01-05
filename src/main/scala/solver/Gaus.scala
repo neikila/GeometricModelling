@@ -7,12 +7,13 @@ import scala.language.postfixOps
 /**
   * Created by k.neyman on 04.01.2017.
   */
-class Gaus(val matrix: Matrix, val right: Vector) extends Solver {
-  require(matrix.size > 1, "Empty matrix")
+class Gaus(val ab: AB) extends Solver {
+  require(ab.A.size > 1, "Empty matrix")
+  def this(matrix: Matrix, right: Vector) = this(AB(matrix, right))
 
   lazy val result = solve()
 
-  def solve(): AB = back(straight(AB(matrix, right), 0))
+  def solve(): AB = back(straight(ab, 0))
 
   private def straight(ab: AB, index: Int): AB = {
     val matrix = ab.A
@@ -61,4 +62,6 @@ case class AB(A: Matrix, B: Vector) {
     A match { case (head +: tail) => tail :+ head },
     B match { case (head +: tail) => tail :+ head }
   )
+
+  def ++(ab: AB) = AB(A ++ ab.A, B ++ ab.B)
 }
