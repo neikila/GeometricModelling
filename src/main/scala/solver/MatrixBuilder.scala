@@ -45,7 +45,7 @@ class MatrixBuilder(val constraints: List[FixedAxis], forms: List[Point]) {
           .updated(conIndexZero + index, -1.0)
       case _ =>
         IndexedSeq.tabulate(size)(_ => 0.0)
-          .updated(pointIndex, 2.0)
+          .updated(2 * pointIndex, 2.0)
     }
 
     val yCon = cons.find { case (constraint, _) => constraint.axis == Axis.Y }
@@ -56,7 +56,7 @@ class MatrixBuilder(val constraints: List[FixedAxis], forms: List[Point]) {
           .updated(conIndexZero + index, -1.0)
       case _ =>
         IndexedSeq.tabulate(size)(_ => 0.0)
-          .updated(pointIndex, 2.0)
+          .updated(2 * pointIndex + 1, 2.0)
     }
 
     AB(IndexedSeq(xVector, yVector), IndexedSeq(2 * point.x, 2 * point.y))

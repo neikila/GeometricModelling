@@ -1,6 +1,6 @@
 import constraint.{Axis, FixedAxis}
 import form.Point
-import solver.{AB, Gaus, MatrixBuilder}
+import solver.{AB, Gaus, MatrixBuilder, ResultExtractor}
 
 import scala.language.postfixOps
 
@@ -10,20 +10,20 @@ import scala.language.postfixOps
 
 object Main {
   def main(args: Array[String]): Unit = {
-    println(ABTemp)
-
-    println()
     println(ABFromBuilder)
 
     println("\nResult:")
-    println(new Gaus(ABFromBuilder).result)
+
+    val result = new ResultExtractor(new Gaus(ABFromBuilder).result, 2).extract
+    println(result.toList)
   }
 
   def ABFromBuilder = {
-    val p = Point(10, 20)
+    val p1 = Point(10, 20)
+    val p2 = Point(3, 3)
     new MatrixBuilder(
-      FixedAxis(Axis.Y, 13, p) :: FixedAxis(Axis.X, 20, p) :: Nil,
-      p :: Nil
+      FixedAxis(Axis.X, 20, p1) :: FixedAxis(Axis.Y, 13, p1) :: Nil,
+      p1 :: p2 :: Nil
     ).build()
   }
 
