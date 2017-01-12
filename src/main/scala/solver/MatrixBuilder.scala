@@ -1,64 +1,50 @@
 package solver
 
-import constraint.{Axis, Constraint, FixedAxis}
+import constraint.{Axis, Constraint, FixedAxis, Var}
 import form.{Form, Point}
+import solver.Solver._
 
+import scala.collection.immutable.IndexedSeq
 import scala.language.postfixOps
 
 /**
   * Created by k.neyman on 05.01.2017.
   */
-class MatrixBuilder(val constraints: List[FixedAxis], forms: List[Point]) {
-  private val constraintsWithIndex = constraints zipWithIndex
+class MatrixBuilder(val constraints: List[FixedAxis], val forms: List[Point]) {
+  private val xParamAmount: Int = forms.size * 2
+  val size = constraints.size + xParamAmount
 
-  val size = constraints.size + forms.size * 2
-  val conIndexZero = forms.size * 2
+  val pointsParams = forms.flatMap({ case Point(id, x, y) => (2 * id -> x) :: (2 * id + 1 -> y) :: Nil }).toMap
 
-  def build() = {
-    val abPoints = forms.toStream.zipWithIndex.map {
-      case (point, index) => applyPoint(point, index)
-    } reduce(_ ++ _)
+  val L = new LagrangeFunction(forms, constraints)
 
-    val abConstraints = constraints map applyConstraint reduce(_ ++ _)
-
-    abPoints ++ abConstraints
-  }
-
-  def applyConstraint(constraint: FixedAxis) = {
-    val column =
-      if (constraint.axis == Axis.X) indexOf(constraint.point)
-      else indexOf(constraint.point) + 1
-    AB(IndexedSeq(IndexedSeq.tabulate(size)(_ => 0.0).updated(column, 1.0)), IndexedSeq(constraint.value))
-  }
-
-  private def indexOf(point: Point) = forms.indexOf(point)
-
-  def applyPoint(point: Point, pointIndex: Int) = {
-    val cons = constraintsWithIndex filter { case (constraint, index) => constraint.point == point }
-    require(cons.size <= 2)
-
-    val xCon = cons.find { case (constraint, _) => constraint.axis == Axis.X }
-    val xVector = xCon match {
-      case Some((_, index)) =>
-        IndexedSeq.tabulate(size)(_ => 0.0)
-          .updated(2 * pointIndex, 2.0)
-          .updated(conIndexZero + index, -1.0)
-      case _ =>
-        IndexedSeq.tabulate(size)(_ => 0.0)
-          .updated(2 * pointIndex, 2.0)
+  implicit def source(variable: Var): Double = {
+    variable match {
+      case Var(id, Var.X) => pointsParams(id)
+      case Var(id, Var.L) => 1
     }
-
-    val yCon = cons.find { case (constraint, _) => constraint.axis == Axis.Y }
-    val yVector = yCon match {
-      case Some((_, index)) =>
-        IndexedSeq.tabulate(size)(_ => 0.0)
-          .updated(2 * pointIndex + 1, 2.0)
-          .updated(conIndexZero + index, -1.0)
-      case _ =>
-        IndexedSeq.tabulate(size)(_ => 0.0)
-          .updated(2 * pointIndex + 1, 2.0)
-    }
-
-    AB(IndexedSeq(xVector, yVector), IndexedSeq(2 * point.x, 2 * point.y))
   }
+
+  def build = {
+    val ALeft = for (i <- 0 until xParamAmount; j <- 0 until xParamAmount)
+      yield (Var(i, Var.X), Var(j, Var.X))
+
+    val top = ALeft.sliding(xParamAmount, xParamAmount).zipWithIndex.map { case (line, id) =>
+      val first = Var(id, Var.X)
+      val right: IndexedSeq[(Var, Var)] = constraints.indices.map { i => (first, Var(i, Var.L)) }
+      line.toList ::: right.toList
+    }.toList
+    top ::: constraints.indices.map { id =>
+      val first = Var(id, Var.L)
+      val left = (0 until xParamAmount).map { i => (first, Var(i, Var.X)) }.toList
+      val right = constraints.indices.map { i => (first, Var(i, Var.L)) }.toList
+      left ::: right
+    }.toList
+  }
+
+  def buildB = (0 until xParamAmount).map { Var(_, Var.X) } ++ constraints.indices.map { Var(_, Var.L) }
+
+  def createAMatrix: Matrix = build map { _ map { case (diffBy1, diffBy2) => L.diffBy(diffBy1, diffBy2)} toIndexedSeq } toIndexedSeq
+
+  def createBMatrix: Vector = buildB map { -1 * L.diffBy(_) }
 }
