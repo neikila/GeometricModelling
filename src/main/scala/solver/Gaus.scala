@@ -22,7 +22,11 @@ class Gaus(val ab: AB) extends Solver {
     val base = matrix.head
     val diagonal: Double = base(index)
 
-    if (diagonal == 0) return straight(ab.sendToEnd, index)
+    if (diagonal == 0) {
+      println(s"index = $index")
+      println(ab)
+      return straight(ab.correct(index), index)
+    }
 
     assert(diagonal != 0, "diagonal == 0")
 
@@ -57,6 +61,15 @@ case class AB(A: Matrix, B: Vector) {
     A.map(_.reverse).reverse,
     B.reverse
   )
+
+  def correct(index: Int) = {
+    if (A.tail.forall(line => line(index) == 0) && A.head.forall(_ == 0)) {
+      println("Boom!")
+      AB(A match { case (head +: tail) => head.updated(index, 1.0) +: tail }, B)
+    }
+    else
+      sendToEnd
+  }
 
   def sendToEnd = AB(
     A match { case (head +: tail) => tail :+ head },

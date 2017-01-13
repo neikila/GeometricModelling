@@ -1,6 +1,6 @@
 package solver
 
-import constraint.{Axis, Constraint, FixedAxis, Var}
+import constraint._
 import form.{Form, Point}
 import solver.Solver._
 
@@ -14,30 +14,26 @@ class MatrixBuilder(val constraints: List[Constraint], val forms: List[Point]) {
   private val xParamAmount: Int = forms.size * 2
   val size = constraints.size + xParamAmount
 
+  val vars = List.tabulate(xParamAmount) { Var(_, Var.X) } :::
+    List.tabulate(constraints.size) { Var(_, Var.L) }
   val L = new LagrangeFunction(forms, constraints)
 
-  def build = {
-    val ALeft = for (i <- 0 until xParamAmount; j <- 0 until xParamAmount)
-      yield (Var(i, Var.X), Var(j, Var.X))
+  val build = (for (i <- vars; j <- vars) yield (i, j)).sliding(size, size).toList
 
-    val top = ALeft.sliding(xParamAmount, xParamAmount).zipWithIndex.map { case (line, id) =>
-      val first = Var(id, Var.X)
-      val right: IndexedSeq[(Var, Var)] = constraints.indices.map { i => (first, Var(i, Var.L)) }
-      line.toList ::: right.toList
-    }.toList
-    top ::: constraints.indices.map { id =>
-      val first = Var(id, Var.L)
-      val left = (0 until xParamAmount).map { i => (first, Var(i, Var.X)) }.toList
-      val right = constraints.indices.map { i => (first, Var(i, Var.L)) }.toList
-      left ::: right
-    }.toList
+  def createAMatrix(implicit source: Source): Matrix =
+    build map { _ map { case (diffBy1, diffBy2) => L.diffBy(diffBy1, diffBy2) } toIndexedSeq} toIndexedSeq
+
+  def createBVector(implicit source: Source): Vector =
+    vars map { -1 * L.diffBy(_) } toIndexedSeq
+
+  def printGausAndHesse(diff: Differentiable)(implicit source: Source): Unit = {
+    vars.foreach(v => println(s"$v = ${source(v)}"))
+    println("Grad:")
+    vars.foreach(variable => println(s"$variable: ${diff.diffBy(variable)}"))
+    println("Hesse:")
+    build.foreach { line =>
+      line.foreach { case (v1, v2) => print(s"$v1$v2 = ${diff.diffBy(v1, v2)}; ") }
+      println
+    }
   }
-
-  def buildB = (0 until xParamAmount).map { Var(_, Var.X) } ++ constraints.indices.map { Var(_, Var.L) }
-
-  def createAMatrix(implicit source: Var => Double): Matrix =
-    build map { _ map { case (diffBy1, diffBy2) => L.diffBy(diffBy1, diffBy2)} toIndexedSeq } toIndexedSeq
-
-  def createBVector(implicit source: Var => Double): Vector =
-    buildB map { -1 * L.diffBy(_) }
 }

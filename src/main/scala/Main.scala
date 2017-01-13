@@ -1,32 +1,36 @@
-import constraint.{Axis, Constraint, FixedAxis, Var}
-import form.Point
-import solver.Solver.{Matrix, Vector}
+import constraint._
+import form.{Line, Point}
+import solver.Solver.{Source, Vector}
 import solver._
 
 import scala.language.{implicitConversions, postfixOps}
 
-/**
-  * Created by k.neyman on 04.01.2017.
-  */
+object Main extends Support {
+  val constraintConstructor = new ConstraintConstructor
+  val pointConstructor = new PointConstructor
 
-object Main {
+  import Solver.pointsToIndices
+
   def main(args: Array[String]): Unit = {
-    val point = Point(0, 5, 3)
-    val c1 = FixedAxis(0, Axis.X, 8, 0)
-    val c2 = FixedAxis(1, Axis.Y, 15, 0)
+    val point = pointConstructor.newPoint(5, 7)
+    val point2 = pointConstructor.newPoint(5, 120)
 
-    val constraints: List[FixedAxis] = c1 :: c2 :: Nil
-    val forms: List[Point] = point :: Nil
+    val c1 = constraintConstructor.fixedAxis(point, Axis.X, 5)
+    val c2 = constraintConstructor.fixedAxis(point, Axis.Y, 0)
 
+    val line = new Line(point, point2)
+    val c3 = constraintConstructor.fixedLineLength(line, 9)
+
+    val constraints: List[Constraint] = c1 :: c2 :: c3 :: Nil
+    val forms: List[Point] = point :: point2 :: Nil
     solve(forms, constraints)
   }
 
   def solve(points: List[Point], constraints: List[Constraint]) = {
-    val pointsParams = points.sortBy(_.id).flatMap({ case Point(id, x, y) => x :: y :: Nil }).toIndexedSeq
+    implicit val source: Source = Solver.createSource(points, constraints.indices.map(id => 0.0))
 
-    implicit val source: Var => Double =
-      Solver.createSource(pointsParams, constraints.indices.map(id => 1.0))
+    val result: Vector = new NewtonSolver(points, constraints).solve
 
-    new ResultExtractor(new NewtonSolver(points, constraints).solve, points.size).extract.foreach(println)
+    new ResultExtractor(result, points.size).extract
   }
 }
