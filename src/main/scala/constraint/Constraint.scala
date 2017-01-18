@@ -14,22 +14,7 @@ trait Constraint extends Differentiable {
   val consId: ConstraintId
 }
 
-class ConstraintConstructor {
-  var counter: ConstraintId = -1
 
-  def fixedAxis(point: Point, axis: Axis, value: Double): FixedAxis =
-    fixedAxis(point.id, axis, value)
-
-  def fixedAxis(pointId: PointId, axis: Axis, value: Double): FixedAxis = {
-    counter += 1
-    FixedAxis(counter, axis, value, pointId)
-  }
-
-  def fixedLineLength(line: Line, value: Double): FixedLineLength = {
-    counter += 1
-    FixedLineLength(counter, line, value)
-  }
-}
 
 
 
