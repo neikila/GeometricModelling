@@ -6,29 +6,13 @@ import form.{Line, Point}
 import form.Point.PointId
 import solver.Solver.{ConstraintId, ParamId, Source}
 
-/**
-  * Created by k.neyman on 05.01.2017.
-  */
-trait Differentiable extends Support {
-  def diffBy(diffBy: Var)(implicit source: Source): Double
 
-  def diffBy(diffBy1: Var, diffBy2: Var)(implicit source: Source): Double
-}
 
-trait Support {
-  implicit class Power(value: Double) {
-    def ^(power: Double) = math.pow(value, power)
-    def ^(power: Int) = math.pow(value, power)
-  }
-}
+
 
 trait Constraint extends Differentiable {
   val consId: ConstraintId
 }
-
-/**
-  * Created by k.neyman on 04.01.2017.
-  */
 
 class ConstraintConstructor {
   var counter: ConstraintId = -1
@@ -47,30 +31,15 @@ class ConstraintConstructor {
   }
 }
 
-class PointConstructor {
-  var counter: PointId = -1
 
-  def newPoint(x: Double, y: Double): Point = {
-    counter += 1
-    Point(counter, x, y)
-  }
-}
 
-object Axis extends Enumeration {
-  type Axis = Value
-  val X, Y = Value
-}
 
-object Var extends Enumeration {
-  type VarType = Value
-  val X, L = Value
-}
-
-case class Var(paramIndex: ParamId, varType: VarType) {
-  override def toString: String = s"$varType${paramIndex + 1}"
-}
 
 case class FixedAxis(consId: ConstraintId, axis: Axis, value: Double, implicit val pointId: PointId) extends Constraint {
+
+  override def f(implicit source: Source): Double = {
+    source(Var(consId, Var.L)) * (value - source(Var(pointId, Var.X)))
+  }
 
   override def diffBy(diffBy: Var)(implicit source: Source): Double = {
     val Var(index, varType) = diffBy
@@ -99,6 +68,9 @@ case class FixedAxis(consId: ConstraintId, axis: Axis, value: Double, implicit v
 }
 
 case class FixedLineLength(consId: ConstraintId, line: Line, length: Double) extends Constraint {
+
+  override def f(implicit source: Source): Double = ((length ^ 2) - (line.x ^ 2) - (line.y ^ 2)) * l
+
   def depend(id: ParamId): Boolean = line.isPartOfLine(id)
   def depend(variable: Var): Boolean = variable match {
     case Var(id, Var.X) => depend(id)

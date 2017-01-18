@@ -1,5 +1,5 @@
 import constraint._
-import form.{Line, Point}
+import form.{Line, Point, PointConstructor}
 import solver.Solver.{Source, Vector}
 import solver._
 

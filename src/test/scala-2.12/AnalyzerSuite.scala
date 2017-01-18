@@ -1,5 +1,5 @@
-import constraint.{Axis, Constraint, ConstraintConstructor, PointConstructor}
-import form.{Line, Point}
+import constraint.{Axis, Constraint, ConstraintConstructor}
+import form.{Line, Point, PointConstructor}
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner

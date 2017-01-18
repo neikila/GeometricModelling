@@ -2,11 +2,15 @@ package solver
 
 import constraint.{Constraint, Differentiable, Var}
 import form.Point
+import solver.Solver.Source
 
 /**
   * Created by k.neyman on 12.01.2017.
   */
 class LagrangeFunction(points: List[Point], val constraints: List[Constraint]) extends Differentiable {
+
+  override def f(implicit source: Source): Double = parts.toStream.map(_.f).sum
+
   def pointToParts(point: Point) = {
     val Point(id, x, y) = point
     new SquareDiff(2 * id, x) :: new SquareDiff(2 * id + 1, y) :: Nil
@@ -22,6 +26,9 @@ class LagrangeFunction(points: List[Point], val constraints: List[Constraint]) e
 }
 
 class SquareDiff(val paramId: Int, val b: Double) extends Differentiable {
+
+  override def f(implicit source: Source): Double = source(Var(paramId, Var.X)) ^ 2 - b
+
   override def diffBy(diffBy: Var)(implicit source: (Var) => Double): Double = diffBy match {
     case Var(id, Var.X) if id == paramId => 2 * (source(diffBy) - b)
     case _ => 0
