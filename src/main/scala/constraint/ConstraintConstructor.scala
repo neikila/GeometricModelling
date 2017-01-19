@@ -8,19 +8,19 @@ import solver.Solver.ConstraintId
 /**
   * Created by k.neyman on 18.01.2017.
   */
-class ConstraintConstructor {
-  var counter: ConstraintId = -1
+trait ConstraintConstructor {
+  var consCounter: ConstraintId = -1
 
   def fixedAxis(point: Point, axis: Axis, value: Double): FixedAxis =
     fixedAxis(point.id, axis, value)
 
   def fixedAxis(pointId: PointId, axis: Axis, value: Double): FixedAxis = {
-    counter += 1
-    FixedAxis(counter, axis, value, pointId)
+    consCounter += 1
+    FixedAxis(consCounter, axis, value, pointId)
   }
 
   def fixedLineLength(line: Line, value: Double): FixedLineLength = {
-    counter += 1
-    FixedLineLength(counter, line, value)
+    consCounter += 1
+    FixedLineLength(consCounter, line, value)
   }
 }

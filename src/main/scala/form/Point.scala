@@ -27,7 +27,9 @@ case class Line(from: PointId, to: PointId) extends Form with Support {
   def squareLength(implicit source: Source) = (x ^ 2) + (y ^ 2)
 }
 
-case class Point(id: Int, x: Double, y: Double) extends Form
+case class Point(id: Int, x: Double, y: Double) extends Form {
+  def this(x: Double, y: Double) = this(-1, x, y)
+}
 
 object Point {
   type PointId = Int
