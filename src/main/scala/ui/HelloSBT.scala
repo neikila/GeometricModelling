@@ -22,7 +22,9 @@ import scalafx.scene.shape.{Line => LineFX}
 
 object HelloSBT extends JFXApp {
 
+  def app = this
   var model = createModel()
+  var currentId = System.nanoTime()
 
   val strokeTaskTypeColor = Black
   strokeTaskTypeColor.opacity(0.8)
@@ -100,18 +102,22 @@ object HelloSBT extends JFXApp {
 
         modelPoint = (newCenter invertedDif zeroPoint).copy(id = point.id)
         println(modelPoint)
+        update()
       }
     }
 
     def dragOver = new EventHandler[MouseEvent] {
       override def handle(event: MouseEvent): Unit = {
         pane.children.remove(circle)
-        Future {
-          model = model.updatePoint(modelPoint).recalculate
-        } onSuccess {
-          case (a) => updateModel()
-        }
-        println("Drag over")
+      }
+    }
+
+    def update(): Unit =  {
+      val recalculation = new Recalculation
+      recalculation {
+        model = model.updatePoint(modelPoint).recalculate
+      } onSuccess {
+        case (_) => app.synchronized { if (currentId < recalculation.t) updateModel() }
       }
     }
   }
@@ -195,4 +201,10 @@ object HelloSBT extends JFXApp {
 
   implicit def pointToPoint2D(point: Point): Point2D = new Point2D(point.x * scale.x, point.y * scale.y)
   implicit def point2dToPoint(point2d: Point2D): Point = new Point(point2d.x / scale.x, point2d.y / scale.y)
+}
+
+class Recalculation {
+  val t = System.nanoTime()
+
+  def apply[T](body: =>T) = Future(body)
 }
