@@ -4,6 +4,7 @@ import com.sun.org.apache.xpath.internal.operations.Variable
 import constraint.{Axis, Support, Var}
 import constraint.Axis.Axis
 import form.Point.PointId
+import solver.Model
 import solver.Solver.{ParamId, Source}
 
 /**
@@ -25,10 +26,16 @@ case class Line(from: PointId, to: PointId) extends Form with Support {
     Point.variable(Axis.Y)(to) - Point.variable(Axis.Y)(from)
 
   def squareLength(implicit source: Source) = (x ^ 2) + (y ^ 2)
+
+  def fromP(implicit points: IndexedSeq[Point]): Point = points(from)
+  def toP(implicit points: IndexedSeq[Point]): Point = points(to)
 }
 
 case class Point(id: Int, x: Double, y: Double) extends Form {
   def this(x: Double, y: Double) = this(-1, x, y)
+
+  def += (withP: Point) = Point(id, x + withP.x, y + withP.y)
+  def -= (withP: Point) = Point(id, x - withP.x, y - withP.y)
 }
 
 object Point {

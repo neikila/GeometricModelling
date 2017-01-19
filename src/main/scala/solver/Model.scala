@@ -4,21 +4,26 @@ import constraint.Axis.Axis
 import constraint.{Constraint, ConstraintConstructor, FixedAxis, FixedLineLength}
 import form.Point.PointId
 import form.{Form, Line, Point, PointConstructor}
-import solver.Solver.Source
+import Solver.{Source, Vector, pointsToIndices}
+
 
 /**
   * Created by k.neyman on 18.01.2017.
   */
-class Model extends ConstraintConstructor with PointConstructor {
+case class Model(var points: List[Point],
+                 var lines: List[Line],
+                 var constraints: List[Constraint]) extends ConstraintConstructor with PointConstructor {
 
-  var points: List[Point] = Nil
-  var lines: List[Line] = Nil
-  var constraints: List[Constraint] = Nil
+  def this() = this(Nil, Nil, Nil)
+
+  val pointsAr = points.toIndexedSeq
+  val source = Solver.createSource(points, Nil)
+
   var lastModified: Option[Point] = None
   var recalculated: List[Point] = Nil
 
   def add(point: Point): Point = {
-    points = (point :: points) sortBy(_.id)
+    points = (point :: points) sortBy (_.id)
     point
   }
 
@@ -32,23 +37,18 @@ class Model extends ConstraintConstructor with PointConstructor {
   }
 
   def add(constraint: Constraint): Constraint = {
-    constraints = (constraint :: constraints) sortBy(_.consId)
+    constraints = (constraint :: constraints) sortBy (_.consId)
     constraint
   }
 
   def recalculate: Model = {
-    import Solver.pointsToIndices
-    import Solver.Vector
-
     implicit val source: Source = Solver.createSource(points, constraints.indices.map(id => 0.0))
     val result: Vector = new NewtonSolver(points, constraints).solve
     recalculated = new ResultExtractor(result, points.size).extract.toList
-    this
+    copy(points = recalculated)
   }
 
-  def forms: List[Form] = {
-    points ::: lines
-  }
+  def forms: List[Form] = points ::: lines
 
   def updatePoint(point: Point): Model = {
     points = points.updated(points.indexWhere(_.id == point.id), point)
