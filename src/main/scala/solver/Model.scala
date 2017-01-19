@@ -20,7 +20,6 @@ case class Model(var points: List[Point],
   val source = Solver.createSource(points, Nil)
 
   var lastModified: Option[Point] = None
-  var recalculated: List[Point] = Nil
 
   def add(point: Point): Point = {
     points = (point :: points) sortBy (_.id)
@@ -44,7 +43,7 @@ case class Model(var points: List[Point],
   def recalculate: Model = {
     implicit val source: Source = Solver.createSource(points, constraints.indices.map(id => 0.0))
     val result: Vector = new NewtonSolver(points, constraints).solve
-    recalculated = new ResultExtractor(result, points.size).extract.toList
+    val recalculated = new ResultExtractor(result, points.size).extract.toList
     copy(points = recalculated)
   }
 

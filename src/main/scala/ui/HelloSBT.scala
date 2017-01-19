@@ -64,7 +64,6 @@ object HelloSBT extends JFXApp {
   }
 
   def draw(point: Point): (PointId, Circle) = {
-    val center = zeroPoint +- point
     val circle: Circle = new Circle {
       radius = pointRadius
       fill = pointColor
@@ -75,8 +74,6 @@ object HelloSBT extends JFXApp {
 
   def draw(line: Line): (Line, LineFX) = {
     implicit val points = model.pointsAr
-    val p1 = zeroPoint +- line.fromP
-    val p2 = zeroPoint +- line.toP
     val lineFx = new LineFX { stroke = lineColor }
     update(line, lineFx)
     line -> lineFx

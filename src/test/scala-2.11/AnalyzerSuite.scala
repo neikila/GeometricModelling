@@ -1,5 +1,5 @@
-import constraint.{Axis, Constraint, ConstraintConstructor}
-import form.{Line, Point, PointConstructor}
+import constraint.Axis
+import form.Line
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
@@ -26,7 +26,7 @@ class AnalyzerSuite extends FunSuite with Accuracy {
     val c3 = model.fixedLineLength(line, 9)
 
     // Action
-    val result = model.recalculate.recalculated
+    val result = model.recalculate.points
 
     val p1 = result.head
     val p2 = result(1)
@@ -52,7 +52,7 @@ class AnalyzerSuite extends FunSuite with Accuracy {
     val c3 = model.fixedLineLength(line, 5)
 
     // Action
-    val result = model.recalculate.recalculated
+    val result = model.recalculate.points
 
     val p1 = result.head
     val p2 = result(1)

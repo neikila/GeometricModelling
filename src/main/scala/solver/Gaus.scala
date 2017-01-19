@@ -16,28 +16,21 @@ class Gaus(val ab: AB) extends Solver {
   def solve(): AB = back(straight(ab, 0))
 
   private def straight(ab: AB, index: Int): AB = {
-    val matrix = ab.A
-    val B = ab.B
+    val AB(matrix, b) = ab.correct(index)
 
     val base = matrix.head
     val diagonal: Double = base(index)
 
-    if (diagonal == 0) {
-      println(s"index = $index")
-      println(ab)
-      return straight(ab.correct(index), index)
-    }
-
-    assert(diagonal != 0, "diagonal == 0")
-
     val reduced = base.map(_ / diagonal)
-    val bReduced = B.head / diagonal
+    val bReduced = b.head / diagonal
 
-    val temp = (matrix.drop(1) zip B.drop(1)) map {
-      case (vector, b) =>
+    val temp = (matrix.drop(1) zip b.drop(1)) map {
+      case (vector, bVal) =>
         val head = vector(index)
-        (vector.toStream zip reduced map { case (a, c) => a - head * c } toIndexedSeq,
-          b - head * bReduced)
+        if (head != 0)
+          (vector.toStream zip reduced map { case (a, c) => a - head * c } toIndexedSeq,
+            bVal - head * bReduced)
+        else (vector, bVal)
     }
 
     if (temp.nonEmpty) {
@@ -63,12 +56,12 @@ case class AB(A: Matrix, B: Vector) {
   )
 
   def correct(index: Int) = {
-    if (A.tail.forall(line => line(index) == 0) && A.head.forall(_ == 0)) {
+    if (A.head(index) != 0) this
+    else if (A.tail.forall(line => line(index) == 0) && A.head.forall(_ == 0)) {
       println("Boom!")
       AB(A match { case (head +: tail) => head.updated(index, 1.0) +: tail }, B)
     }
-    else
-      sendToEnd
+    else sendToEnd
   }
 
   def sendToEnd = AB(
