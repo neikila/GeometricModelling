@@ -31,7 +31,7 @@ case class Line(from: PointId, to: PointId) extends Form with Support {
   def toP(implicit points: IndexedSeq[Point]): Point = points(to)
 }
 
-case class Point(id: Int, x: Double, y: Double) extends Form {
+case class Point(id: PointId, x: Double, y: Double) extends Form {
   def this(x: Double, y: Double) = this(-1, x, y)
 
   def += (withP: Point) = Point(id, x + withP.x, y + withP.y)
