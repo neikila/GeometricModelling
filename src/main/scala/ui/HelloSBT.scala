@@ -25,6 +25,7 @@ object HelloSBT extends JFXApp {
   def app = this
   var model = createModel()
   var currentId = System.nanoTime()
+  val recalculation = new Recalculation[Model]
 
   val strokeTaskTypeColor = Black
   strokeTaskTypeColor.opacity(0.8)
@@ -45,6 +46,7 @@ object HelloSBT extends JFXApp {
   val pane = new Pane
   pane.prefWidth = modelSize.x
   pane.prefHeight = modelSize.y
+  pane.cache = false
 
   var pointsMap = drawPoints.toMap
   var linesMap = drawLines.toMap
@@ -67,13 +69,17 @@ object HelloSBT extends JFXApp {
     val circle: Circle = new Circle {
       radius = pointRadius
       fill = pointColor
+      cache = false
     }
     update(point, circle)
     point.id -> circle
   }
 
   def draw(line: Line): (Line, LineFX) = {
-    val lineFx = new LineFX { stroke = lineColor }
+    val lineFx = new LineFX {
+      stroke = lineColor
+      cache = false
+    }
     update(line, lineFx)
     line -> lineFx
   }
@@ -112,17 +118,20 @@ object HelloSBT extends JFXApp {
 
     def update(): Unit =  {
       val newPoint = modelPoint.copy()
-      val recalculation = new Recalculation
-      recalculation {
-        model.updatePoint(newPoint).recalculate
-      } onSuccess {
-        case (newModel) => app.synchronized {
-          if (currentId < recalculation.t) {
+      if (recalculation.futureInProgress.isEmpty) {
+        recalculation {
+          model.updatePoint(newPoint).recalculate
+        } onSuccess {
+          case (newModel) =>
             model = newModel
             updateModel()
-            currentId = recalculation.t
-          }
+            if (recalculation.calledAgain) {
+              recalculation.calledAgain = false
+              update()
+            }
         }
+      } else {
+        recalculation.calledAgain = true
       }
     }
   }
@@ -204,7 +213,7 @@ object HelloSBT extends JFXApp {
 
     val p5 = model.newPoint(10, 0)
     val l3 = model.add(new Line(p1, p5))
-    model.fixedLineLength(l3, 10)
+//    model.fixedLineLength(l3, 10)
     model.orto(l2, l3)
 
     val p6 = model.newPoint(-10, -10)
@@ -227,8 +236,18 @@ object HelloSBT extends JFXApp {
   implicit def point2dToPoint(point2d: Point2D): Point = new Point(point2d.x / scale.x, point2d.y / scale.y)
 }
 
-class Recalculation {
-  val t = System.nanoTime()
+class Recalculation[T] {
+  var calledAgain = false
+  var futureInProgress: Option[Future[T]] = None
 
-  def apply[T](body: =>T) = Future(body)
+  def apply(body: =>T) = {
+    if (futureInProgress.isEmpty) {
+      val f = Some(Future(body) map { r => futureInProgress = None; r})
+      futureInProgress = f
+      f.get
+    } else {
+      calledAgain = true
+      futureInProgress.get
+    }
+  }
 }
