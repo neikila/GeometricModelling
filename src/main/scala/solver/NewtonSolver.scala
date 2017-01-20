@@ -2,6 +2,7 @@ package solver
 
 import constraint.{Constraint, Var}
 import form.Point
+import form.Point.PointId
 import solver.Solver.{Matrix, Source, Vector}
 
 import scala.language.implicitConversions
@@ -9,7 +10,7 @@ import scala.language.implicitConversions
 /**
   * Created by k.neyman on 11.01.2017.
   */
-class NewtonSolver(points: List[Point], constraints: List[Constraint]) extends Solver with Accuracy {
+class NewtonSolver(points: List[Point], constraints: List[Constraint], activePoint: Option[PointId]) extends Solver with Accuracy {
   private val xParamsAmount: Int = 2 * points.size
 
   implicit def idToVar(id: Int): Var = {
@@ -17,7 +18,7 @@ class NewtonSolver(points: List[Point], constraints: List[Constraint]) extends S
     else Var(id - xParamsAmount, Var.L)
   }
 
-  val builder = new MatrixBuilder(constraints, points)
+  val builder = new MatrixBuilder(constraints, points, activePoint)
 
   def solve(implicit source: Source): Vector = {
     val aMatrix = builder.createAMatrix

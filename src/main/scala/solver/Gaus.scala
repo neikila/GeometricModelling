@@ -24,14 +24,14 @@ class Gaus(val ab: AB) extends Solver {
     val reduced = base.map(_ / diagonal)
     val bReduced = b.head / diagonal
 
-    val temp = (matrix.drop(1) zip b.drop(1)) map {
+    val temp = (matrix.drop(1) zip b.drop(1)).par.map({
       case (vector, bVal) =>
         val head = vector(index)
         if (head != 0)
-          (vector.toStream zip reduced map { case (a, c) => a - head * c } toIndexedSeq,
+          (vector.par zip reduced map { case (a, c) => a - head * c } toIndexedSeq,
             bVal - head * bReduced)
         else (vector, bVal)
-    }
+    }).toIndexedSeq
 
     if (temp.nonEmpty) {
       val (newA, newB) = temp.unzip

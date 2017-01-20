@@ -1,6 +1,7 @@
 package solver
 
 import constraint._
+import form.Point.PointId
 import form.{Form, Point}
 import solver.Solver._
 
@@ -10,13 +11,13 @@ import scala.language.postfixOps
 /**
   * Created by k.neyman on 05.01.2017.
   */
-class MatrixBuilder(val constraints: List[Constraint], val forms: List[Point]) {
+class MatrixBuilder(val constraints: List[Constraint], val forms: List[Point], val activePoint: Option[PointId]) {
   private val xParamAmount: Int = forms.size * 2
   val size = constraints.size + xParamAmount
 
   val vars = List.tabulate(xParamAmount) { Var(_, Var.X) } :::
     List.tabulate(constraints.size) { Var(_, Var.L) }
-  val L = new LagrangeFunction(forms, constraints)
+  val L = new LagrangeFunction(forms, constraints, activePoint)
 
   val build = (for (i <- vars; j <- vars) yield (i, j)).sliding(size, size).toList
 

@@ -12,14 +12,10 @@ import Solver.{Source, Vector, pointsToIndices}
   */
 case class Model(var points: List[Point],
                  var lines: List[Line],
-                 var constraints: List[Constraint]) extends ConstraintConstructor with PointConstructor {
+                 var constraints: List[Constraint],
+                 lastActivePoint: Option[PointId] = None) extends ConstraintConstructor with PointConstructor {
 
   def this() = this(Nil, Nil, Nil)
-
-  val pointsAr = points.toIndexedSeq
-  val source = Solver.createSource(points, Nil)
-
-  var lastModified: Option[Point] = None
 
   def add(point: Point): Point = {
     points = (point :: points) sortBy (_.id)
@@ -42,7 +38,7 @@ case class Model(var points: List[Point],
 
   def recalculate: Model = {
     implicit val source: Source = Solver.createSource(points, constraints.indices.map(id => 0.0))
-    val result: Vector = new NewtonSolver(points, constraints).solve
+    val result: Vector = new NewtonSolver(points, constraints, lastActivePoint).solve
     val recalculated = new ResultExtractor(result, points.size).extract.toList
     copy(points = recalculated)
   }
@@ -50,9 +46,8 @@ case class Model(var points: List[Point],
   def forms: List[Form] = points ::: lines
 
   def updatePoint(point: Point): Model = {
-    points = points.updated(points.indexWhere(_.id == point.id), point)
-    lastModified = Some(point)
-    this
+    val newPoints = points.updated(points.indexWhere(_.id == point.id), point)
+    copy(points = newPoints, lastActivePoint = Some(point.id))
   }
 
   def updateConstraint(constraint: Constraint): Model = {

@@ -73,7 +73,6 @@ object HelloSBT extends JFXApp {
   }
 
   def draw(line: Line): (Line, LineFX) = {
-    implicit val points = model.pointsAr
     val lineFx = new LineFX { stroke = lineColor }
     update(line, lineFx)
     line -> lineFx
@@ -107,16 +106,19 @@ object HelloSBT extends JFXApp {
     def dragOver = new EventHandler[MouseEvent] {
       override def handle(event: MouseEvent): Unit = {
         pane.children.remove(circle)
+        update()
       }
     }
 
     def update(): Unit =  {
+      val newPoint = modelPoint.copy()
       val recalculation = new Recalculation
       recalculation {
-        model = model.updatePoint(modelPoint).recalculate
+        model.updatePoint(newPoint).recalculate
       } onSuccess {
-        case (_) => app.synchronized {
+        case (newModel) => app.synchronized {
           if (currentId < recalculation.t) {
+            model = newModel
             updateModel()
             currentId = recalculation.t
           }
