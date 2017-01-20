@@ -84,6 +84,7 @@ object HelloSBT extends JFXApp {
 
     def pressed = new EventHandler[MouseEvent] {
       override def handle(event: MouseEvent): Unit = {
+        println(s"$point clicked")
         val (_, newP) = draw(point)
         pointsMap = pointsMap + (point.id -> newP)
         pane.children.add(newP)
@@ -114,7 +115,12 @@ object HelloSBT extends JFXApp {
       recalculation {
         model = model.updatePoint(modelPoint).recalculate
       } onSuccess {
-        case (_) => app.synchronized { if (currentId < recalculation.t) updateModel() }
+        case (_) => app.synchronized {
+          if (currentId < recalculation.t) {
+            updateModel()
+            currentId = recalculation.t
+          }
+        }
       }
     }
   }
@@ -159,14 +165,13 @@ object HelloSBT extends JFXApp {
   }
 
   def update(line: Line, lineFX: LineFX): Unit = {
-    implicit val points = model.pointsAr
-    val p1 = zeroPoint +- line.fromP
-    val p2 = zeroPoint +- line.toP
+    val p1 = pointsMap(line.from)
+    val p2 = pointsMap(line.to)
 
-    lineFX.startX = p1.x
-    lineFX.startY = p1.y
-    lineFX.endX = p2.x
-    lineFX.endY = p2.y
+    lineFX.startX = p1.centerX.toDouble
+    lineFX.startY = p1.centerY.toDouble
+    lineFX.endX = p2.centerX.toDouble
+    lineFX.endY = p2.centerY.toDouble
   }
 
   def updateModel(): Unit = {
