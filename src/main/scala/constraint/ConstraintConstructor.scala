@@ -23,4 +23,19 @@ trait ConstraintConstructor {
     consCounter += 1
     FixedLineLength(consCounter, line, value)
   }
+
+  def parallel(l1: Line, l2: Line): Parallel = {
+    consCounter += 1
+    Parallel(consCounter, l1, l2)
+  }
+
+  def orto(l1: Line, l2: Line): Orto = {
+    consCounter += 1
+    Orto(consCounter, l1, l2)
+  }
+
+  def fixedAngle(l1: Line, l2: Line, angle: Double): FixedAngle = {
+    consCounter += 1
+    FixedAngle(consCounter, l1, l2, angle)
+  }
 }

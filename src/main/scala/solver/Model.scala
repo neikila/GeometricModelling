@@ -1,7 +1,7 @@
 package solver
 
 import constraint.Axis.Axis
-import constraint.{Constraint, ConstraintConstructor, FixedAxis, FixedLineLength}
+import constraint._
 import form.Point.PointId
 import form.{Form, Line, Point, PointConstructor}
 import Solver.{Source, Vector, pointsToIndices}
@@ -71,6 +71,24 @@ case class Model(var points: List[Point],
 
   override def fixedAxis(pointId: PointId, axis: Axis, value: Double): FixedAxis = {
     val c = super.fixedAxis(pointId, axis, value)
+    add(c)
+    c
+  }
+
+  override def parallel(l1: Line, l2: Line): Parallel = {
+    val c = super.parallel(l1, l2)
+    add(c)
+    c
+  }
+
+  override def orto(l1: Line, l2: Line): Orto = {
+    val c = super.orto(l1, l2)
+    add(c)
+    c
+  }
+
+  override def fixedAngle(l1: Line, l2: Line, angle: Double): FixedAngle = {
+    val c = super.fixedAngle(l1, l2, angle)
     add(c)
     c
   }

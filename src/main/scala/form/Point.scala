@@ -26,6 +26,7 @@ case class Line(from: PointId, to: PointId) extends Form with Support {
     Point.variable(Axis.Y)(to) - Point.variable(Axis.Y)(from)
 
   def squareLength(implicit source: Source) = (x ^ 2) + (y ^ 2)
+  def length(implicit source: Source) = math.sqrt(squareLength)
 
   def fromP(implicit points: IndexedSeq[Point]): Point = points(from)
   def toP(implicit points: IndexedSeq[Point]): Point = points(to)

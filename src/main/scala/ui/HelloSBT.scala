@@ -176,14 +176,34 @@ object HelloSBT extends JFXApp {
 
   def createModel(): Model = {
     val model = new Model
-    val point = model.newPoint(5, 7)
-    val point2 = model.newPoint(5, 120)
+    val p1 = model.newPoint(5, 7)
+    val p2 = model.newPoint(5, 120)
 
-    val c1 = model.fixedAxis(point, Axis.X, 5)
-    val c2 = model.fixedAxis(point, Axis.Y, 0)
+    model.fixedAxis(p1, Axis.X, 5)
+    model.fixedAxis(p1, Axis.Y, 0)
 
-    val line = model.add(new Line(point, point2))
-    val c3 = model.fixedLineLength(line, 9)
+    val l1 = model.add(new Line(p1, p2))
+    model.fixedLineLength(l1, 9)
+
+    val p3 = model.newPoint(-5, 5)
+    val p4 = model.newPoint(-8, 10)
+    val l2 = model.add(new Line(p3, p4))
+
+    model.fixedAxis(p3, Axis.X, -5)
+    model.fixedAxis(p3, Axis.Y, 5)
+
+    model.parallel(l1, l2)
+    model.fixedLineLength(l2, 7)
+
+    val p5 = model.newPoint(10, 0)
+    val l3 = model.add(new Line(p1, p5))
+    model.fixedLineLength(l3, 10)
+    model.orto(l2, l3)
+
+    val p6 = model.newPoint(-10, -10)
+    val l4 = model.add(new Line(p3, p6))
+    model.fixedLineLength(l4, 5)
+    model.fixedAngle(l2, l4, 30)
 
     model.recalculate
   }

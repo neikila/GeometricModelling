@@ -26,6 +26,6 @@ trait DiffApproximation extends Differentiable {
 
   override def diffBy(diffBy1: Var, diffBy2: Var)(implicit source: Source): Double = {
     val (s1, s2) = sourcePair(source, diffBy2)
-    (diffBy(diffBy1)(s2) - diffBy(diffBy2)(s1)) / (2 * delta)
+    (diffBy(diffBy1)(s2) - diffBy(diffBy1)(s1)) / (2 * delta)
   }
 }
